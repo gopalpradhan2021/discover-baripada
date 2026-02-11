@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-import { colors } from "@/constants/theme";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
+        animation: "none",
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.tabBar,
@@ -32,6 +34,24 @@ export default function TabsLayout() {
           title: "Explore",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="compass" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: "Map",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: "Favorites",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
           ),
         }}
       />

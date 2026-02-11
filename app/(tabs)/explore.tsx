@@ -1,152 +1,235 @@
-import { useCallback } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { FlatList, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
-import PlaceCard from "@/components/PlaceCard";
+import { PlaceCard } from "@/components/PlaceCard";
 import { Screen } from "@/components/Screen";
-import { colors, radius, spacing } from "@/constants/theme";
-
-const picks = [
-  {
-    id: "morning",
-    name: "Sahu Park",
-    type: "Park",
-    distanceKm: 1.2,
-    tag: "Morning walk",
-  },
-  {
-    id: "market",
-    name: "Baripada Bazaar",
-    type: "Market",
-    distanceKm: 0.8,
-    tag: "Local finds",
-  },
-  {
-    id: "temple",
-    name: "Jagannath Temple",
-    type: "Heritage",
-    distanceKm: 2.4,
-    tag: "Quiet hour",
-  },
-];
+import { useFavorites } from "@/components/FavoritesProvider";
+import { radius, spacing, typography } from "@/constants/theme";
+import { useTheme } from "@/components/ThemeProvider";
+import { categoryItems } from "@/data/categoryItems";
+import { useDistances } from "@/hooks/useDistances";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 export default function ExploreScreen() {
-  const handlePress = useCallback((id: string) => {
-    // TODO: Hook up navigation when routes are ready.
-    console.log("Explore pressed:", id);
-  }, []);
+  const router = useRouter();
+  const { latitude, longitude, loading, error } = useUserLocation();
+  const { colors } = useTheme();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
-  const renderItem = useCallback(
-    ({ item }: { item: (typeof picks)[number] }) => (
-      <PlaceCard
-        name={item.name}
-        type={item.type}
-        distanceKm={item.distanceKm}
-        tag={item.tag}
-        onPress={() => handlePress(item.id)}
-      />
-    ),
-    [handlePress]
+  const nearbyItems = useMemo(() => categoryItems.places.slice(0, 6), []);
+  const foodItems = useMemo(() => categoryItems.food.slice(0, 6), []);
+  const cultureItems = useMemo(() => categoryItems.culture.slice(0, 6), []);
+  const eventItems = useMemo(() => categoryItems.events.slice(0, 6), []);
+
+  const nearbyDistances = useDistances(nearbyItems, latitude, longitude);
+  const foodDistances = useDistances(foodItems, latitude, longitude);
+  const cultureDistances = useDistances(cultureItems, latitude, longitude);
+  const eventDistances = useDistances(eventItems, latitude, longitude);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        content: {
+          paddingTop: spacing.l,
+          paddingBottom: spacing.xl,
+          gap: spacing.m,
+        },
+        header: {
+          padding: spacing.m,
+          borderRadius: radius.l,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        notice: {
+          paddingHorizontal: spacing.s,
+        },
+        noticeText: {
+          color: colors.inkMuted,
+          fontSize: 12,
+          fontFamily: typography.body,
+        },
+        kicker: {
+          color: colors.accentDeep,
+          fontSize: 12,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          fontFamily: typography.bodySemibold,
+        },
+        title: {
+          marginTop: spacing.s,
+          fontSize: 24,
+          fontFamily: typography.heading,
+          color: colors.ink,
+        },
+        subtitle: {
+          marginTop: spacing.s,
+          color: colors.inkMuted,
+          fontSize: 14,
+          lineHeight: 20,
+          fontFamily: typography.body,
+        },
+        section: {
+          gap: spacing.s,
+        },
+        sectionHeader: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: spacing.s,
+        },
+        sectionTitle: {
+          fontSize: 16,
+          fontFamily: typography.bodySemibold,
+          color: colors.ink,
+        },
+        sectionHint: {
+          fontSize: 12,
+          fontFamily: typography.bodyMedium,
+          color: colors.inkMuted,
+        },
+        carousel: {
+          paddingHorizontal: spacing.s,
+          gap: spacing.m,
+        },
+        carouselCard: {
+          width: 220,
+        },
+      }),
+    [colors]
   );
 
   return (
     <Screen>
-      <FlatList
-        data={picks}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.kicker}>Explore</Text>
-            <Text style={styles.title}>What is close and worth it?</Text>
-            <Text style={styles.subtitle}>
-              A short list of places to step into without planning.
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.kicker}>Explore Baripada</Text>
+          <Text style={styles.title}>Discover what the city feels like today.</Text>
+          <Text style={styles.subtitle}>
+            Curated picks across places, food, culture, and events.
+          </Text>
+        </View>
+
+        <View style={styles.notice}>
+          {loading && (
+            <Text style={styles.noticeText}>Getting your location...</Text>
+          )}
+          {!!error && (
+            <Text style={styles.noticeText}>
+              Location permission denied. Distances are hidden.
             </Text>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Nearby Places</Text>
+            <Text style={styles.sectionHint}>Quick escapes</Text>
           </View>
-        }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListFooterComponent={
-          <View style={styles.footer}>
-            <Text style={styles.footerTitle}>Themes nearby</Text>
-            <View style={styles.tagRow}>
-              {["Food", "Culture", "Nature", "Shopping"].map((label) => (
-                <View key={label} style={styles.tag}>
-                  <Text style={styles.tagText}>{label}</Text>
-                </View>
-              ))}
-            </View>
+          <FlatList
+            data={nearbyItems}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            renderItem={({ item, index }) => (
+              <View style={styles.carouselCard}>
+                <PlaceCard
+                  place={item}
+                  onPress={() => router.push(`/details/${item.id}`)}
+                  distanceKm={nearbyDistances[item.id] ?? null}
+                  isFavorite={isFavorite(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                  animateOnMount
+                  animationDelay={index * 60}
+                />
+              </View>
+            )}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular Food Spots</Text>
+            <Text style={styles.sectionHint}>Local favorites</Text>
           </View>
-        }
-        showsVerticalScrollIndicator={false}
-      />
+          <FlatList
+            data={foodItems}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            renderItem={({ item, index }) => (
+              <View style={styles.carouselCard}>
+                <PlaceCard
+                  place={item}
+                  onPress={() => router.push(`/details/${item.id}`)}
+                  distanceKm={foodDistances[item.id] ?? null}
+                  isFavorite={isFavorite(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                  animateOnMount
+                  animationDelay={index * 60}
+                />
+              </View>
+            )}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Cultural Highlights</Text>
+            <Text style={styles.sectionHint}>Heritage + arts</Text>
+          </View>
+          <FlatList
+            data={cultureItems}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            renderItem={({ item, index }) => (
+              <View style={styles.carouselCard}>
+                <PlaceCard
+                  place={item}
+                  onPress={() => router.push(`/details/${item.id}`)}
+                  distanceKm={cultureDistances[item.id] ?? null}
+                  isFavorite={isFavorite(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                  animateOnMount
+                  animationDelay={index * 60}
+                />
+              </View>
+            )}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Upcoming Events</Text>
+            <Text style={styles.sectionHint}>Plan ahead</Text>
+          </View>
+          <FlatList
+            data={eventItems}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            renderItem={({ item, index }) => (
+              <View style={styles.carouselCard}>
+                <PlaceCard
+                  place={item}
+                  onPress={() => router.push(`/details/${item.id}`)}
+                  distanceKm={eventDistances[item.id] ?? null}
+                  isFavorite={isFavorite(item.id)}
+                  onToggleFavorite={() => toggleFavorite(item.id)}
+                  animateOnMount
+                  animationDelay={index * 60}
+                />
+              </View>
+            )}
+          />
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingTop: spacing.l,
-    paddingBottom: spacing.xl,
-    gap: spacing.m,
-  },
-  header: {
-    padding: spacing.m,
-    borderRadius: radius.l,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  kicker: {
-    color: colors.accentDeep,
-    fontSize: 12,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    fontWeight: "700",
-  },
-  title: {
-    marginTop: spacing.s,
-    fontSize: 24,
-    fontWeight: "800",
-    color: colors.ink,
-  },
-  subtitle: {
-    marginTop: spacing.s,
-    color: colors.inkMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  separator: {
-    height: spacing.m,
-  },
-  footer: {
-    padding: spacing.m,
-    borderRadius: radius.l,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  footerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.ink,
-  },
-  tagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.s,
-    marginTop: spacing.s,
-  },
-  tag: {
-    paddingHorizontal: spacing.s,
-    paddingVertical: 6,
-    borderRadius: radius.s,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#FBF4EA",
-  },
-  tagText: {
-    color: colors.inkMuted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-});
