@@ -114,7 +114,7 @@ export function WeatherCard({
       </View>
       <View style={styles.center}>
         <Text style={styles.temp}>
-          {temperatureC != null ? `${Math.round(temperatureC)}°C` : "--"}
+          {temperatureC != null ? `${Math.round(temperatureC)}\u00B0C` : "--"}
         </Text>
       </View>
       <View style={styles.right}>

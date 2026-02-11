@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
-  Image,
+  ImageBackground,
   Pressable,
   StyleSheet,
   Text,
@@ -31,6 +31,7 @@ export function HeroCard({ slides }: HeroCardProps) {
   const { colors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const heroHeight = Math.round(width * 0.6);
   const listRef = useRef<FlatList<HeroSlide>>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
@@ -48,18 +49,19 @@ export function HeroCard({ slides }: HeroCardProps) {
 
   const styles = StyleSheet.create({
     card: {
+      width: "100%",
+      height: heroHeight,
       borderRadius: radius.l,
       overflow: "hidden",
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
+      position: "relative",
     },
     slide: {
       width,
-      paddingHorizontal: spacing.s,
-      paddingVertical: spacing.s,
-      justifyContent: "center",
-      gap: spacing.xs,
+      height: heroHeight,
+      justifyContent: "flex-end",
     },
     image: {
       ...StyleSheet.absoluteFillObject,
@@ -68,6 +70,13 @@ export function HeroCard({ slides }: HeroCardProps) {
     },
     overlay: {
       ...StyleSheet.absoluteFillObject,
+      zIndex: 1,
+    },
+    content: {
+      paddingHorizontal: spacing.s,
+      paddingVertical: spacing.s,
+      gap: spacing.xs,
+      zIndex: 2,
     },
     kicker: {
       color: "#FFFFFF",
@@ -92,21 +101,26 @@ export function HeroCard({ slides }: HeroCardProps) {
       fontFamily: typography.body,
     },
     dots: {
+      position: "absolute",
+      bottom: 12,
+      left: 0,
+      right: 0,
       flexDirection: "row",
-      gap: 6,
       justifyContent: "center",
-      paddingBottom: spacing.s,
+      alignItems: "center",
+      zIndex: 3,
     },
     dot: {
-      width: 6,
-      height: 6,
-      borderRadius: 999,
-      backgroundColor: "rgba(255,255,255,0.4)",
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginHorizontal: 4,
+      backgroundColor: "rgba(255,255,255,0.6)",
     },
     dotActive: {
-      width: 16,
-      borderRadius: 999,
-      backgroundColor: colors.accent,
+      width: 20,
+      borderRadius: 10,
+      backgroundColor: "#F4A261",
     },
   });
 
@@ -137,14 +151,21 @@ export function HeroCard({ slides }: HeroCardProps) {
             }}
             style={styles.slide}
           >
-            <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
-            <LinearGradient
-              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.55)"]}
-              style={styles.overlay}
-            />
-            {item.kicker ? <Text style={styles.kicker}>{item.kicker}</Text> : null}
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
+            <ImageBackground
+              source={{ uri: item.image }}
+              style={styles.image}
+              resizeMode="cover"
+            >
+              <LinearGradient
+                colors={["rgba(0,0,0,0.05)", "rgba(0,0,0,0.6)"]}
+                style={styles.overlay}
+              />
+              <View style={styles.content}>
+                {item.kicker ? <Text style={styles.kicker}>{item.kicker}</Text> : null}
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.subtitle}>{item.subtitle}</Text>
+              </View>
+            </ImageBackground>
           </Pressable>
         )}
       />

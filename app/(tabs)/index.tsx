@@ -302,7 +302,9 @@ export default function HomeScreen() {
             transform: [{ translateY: sectionAnims[0].translate }],
           }}
         >
-          <HeroCard slides={heroSlides} />
+          <View style={styles.section}>
+            <HeroCard slides={heroSlides} />
+          </View>
         </Animated.View>
 
         <Animated.View
@@ -373,6 +375,16 @@ export default function HomeScreen() {
                 />
               </View>
             ))}
+            <View key="essentials" style={styles.gridItem}>
+              <HomeCategoryCard
+                title="Essentials"
+                description="Services, transport, and helpers."
+                iconName="grid-outline"
+                backgroundColor="#E6F1F4"
+                height={cardHeight}
+                onPress={() => router.push("/essentials")}
+              />
+            </View>
           </View>
         </Animated.View>
 
